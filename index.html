@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en" class="h-full antialiased">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banking Assistant</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media',
+      theme: {
+        extend: {
+          fontFamily: { display: ['Inter','ui-sans-serif','system-ui','sans-serif'] },
+          boxShadow: { soft:'0 10px 30px -10px rgba(0,0,0,.15)', glass:'0 6px 30px -12px rgba(0,0,0,.25)' },
+          animation: { pop:'pop .2s ease-out' },
+          keyframes: { pop:{'0%':{transform:'scale(.98)',opacity:.7},'100%':{transform:'scale(1)',opacity:1}} }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+    *::-webkit-scrollbar { height: 8px; width: 8px; }
+    *::-webkit-scrollbar-thumb { background: rgba(148,163,184,.6); border-radius: 999px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+
+<body class="h-full font-display text-slate-900 dark:text-slate-100
+             bg-[radial-gradient(1200px_800px_at_-10%_-10%,#fce7f3,transparent),radial-gradient(1000px_700px_at_110%_10%,#e0f2fe,transparent)]
+             dark:bg-[radial-gradient(1000px_700px_at_-20%_-20%,#0f172a,transparent),radial-gradient(1000px_700px_at_120%_0%,#1f2937,transparent)]">
+
+  <div class="h-screen max-w-5xl mx-auto flex flex-col px-4 sm:px-6">
+    <!-- Header -->
+    <header class="mt-4 sm:mt-6 sticky top-4 z-20">
+      <div class="backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 rounded-2xl shadow-glass px-4 sm:px-6 py-3 flex items-center gap-3">
+        <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 grid place-items-center text-white font-semibold shadow-soft">₹</div>
+        <div class="flex-1">
+          <h1 class="text-base sm:text-lg font-semibold leading-tight">Banking Assistant</h1>
+          <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">Ask about accounts, loan rates, branch hours, ATMs…</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="trainBtn" class="text-xs px-3 py-1.5 rounded-xl bg-slate-900/90 text-white hover:bg-slate-900 transition-all shadow-soft">Retrain</button>
+          <button id="clearBtn" class="text-xs px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">Clear</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat card -->
+    <div class="mt-4 sm:mt-6 flex-1 relative">
+      <div class="absolute inset-0">
+        <div class="h-full w-full rounded-3xl bg-white/70 dark:bg-slate-900/70 border border-white/50 dark:border-white/10 shadow-glass overflow-hidden flex flex-col">
+          <main id="chat" class="flex-1 overflow-y-auto px-3 sm:px-6 py-5 space-y-4"></main>
+
+          <footer class="px-3 sm:px-6 pb-4">
+            <form id="composer" class="relative" action="javascript:void(0)" novalidate>
+              <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 shadow-soft p-2 pl-3 pr-28">
+                <textarea id="input" rows="1" placeholder="Type your message… (Enter to send)"
+                          class="w-full resize-none bg-transparent outline-none text-[15px] leading-6 max-h-40"
+                          autocomplete="off"></textarea>
+              </div>
+              <div class="absolute right-3 top-2.5 flex items-center gap-2">
+                <button id="sendBtn" type="button"
+                        class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-tr from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 text-white px-4 py-2 font-medium shadow-soft transition-transform active:scale-[.98]">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 -rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  Send
+                </button>
+              </div>
+            </form>
+            <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 px-1">
+              <kbd class="px-1 py-0.5 rounded border border-slate-300 dark:border-slate-600">Enter</kbd> to send •
+              <kbd class="px-1 py-0.5 rounded border border-slate-300 dark:border-slate-600">Shift</kbd>+<kbd class="px-1 py-0.5 rounded border border-slate-300 dark:border-slate-600">Enter</kbd> for newline
+            </p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <template id="msg-user">
+    <div class="flex justify-end animate-pop">
+      <div class="max-w-[85%] rounded-3xl rounded-br-sm bg-gradient-to-tr from-pink-600 to-rose-500 text-white px-4 py-2 shadow-soft">
+        <p class="whitespace-pre-wrap text-[15px] leading-6"></p>
+        <span class="mt-1 block text-[10px] opacity-85"></span>
+      </div>
+    </div>
+  </template>
+
+  <template id="msg-bot">
+    <div class="flex items-start gap-2 animate-pop">
+      <div class="h-9 w-9 shrink-0 rounded-2xl bg-slate-200 dark:bg-slate-800 grid place-items-center text-slate-700 dark:text-slate-300">🤖</div>
+      <div class="max-w-[85%] rounded-3xl rounded-bl-sm bg-white/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 px-4 py-2 shadow-soft">
+        <p class="whitespace-pre-wrap text-[15px] leading-6"></p>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5" data-debug hidden>
+            <span data-intent></span><span class="opacity-60">•</span><span data-conf></span>
+          </span>
+          <span class="grow"></span>
+          <div class="flex items-center gap-2" data-actions hidden>
+            <button class="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700">👍</button>
+            <button class="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700">👎</button>
+            <button class="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700" data-correct>Correct</button>
+            <button class="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700" data-fix>Fix</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="typing">
+    <div class="flex items-start gap-2 animate-pop">
+      <div class="h-9 w-9 shrink-0 rounded-2xl bg-slate-200 dark:bg-slate-800 grid place-items-center text-slate-700 dark:text-slate-300">🤖</div>
+      <div class="max-w-[85%] rounded-3xl rounded-bl-sm bg-white/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/60 px-4 py-2 shadow-soft">
+        <div class="flex items-center gap-1"><span class="animate-bounce">●</span><span class="animate-bounce [animation-delay:120ms]">●</span><span class="animate-bounce [animation-delay:240ms]">●</span></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-30">
+    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/60 p-4 space-y-3 shadow-glass">
+      <h3 id="modalTitle" class="text-sm font-semibold"></h3>
+      <input id="modalInput" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2" />
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="modalCancel" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700">Cancel</button>
+        <button id="modalSave" class="px-3 py-1.5 rounded-xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden z-30">
+    <div class="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm shadow-soft">Saved</div>
+  </div>
+
+  <script>
+    (() => {
+      // -------- API base autodetect --------
+      const API_BASE = (location.port === "5000") ? "" : "http://127.0.0.1:5000";
+      const API_CHAT  = `${API_BASE}/api/chat`;
+      const API_FB    = `${API_BASE}/api/feedback`;
+      const API_TRAIN = `${API_BASE}/api/train`;
+      const LOW_CONF_THRESHOLD = 0.35;
+
+      // Elements
+      const chat = document.getElementById('chat');
+      const form = document.getElementById('composer');
+      const input = document.getElementById('input');
+      const sendBtn = document.getElementById('sendBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const trainBtn = document.getElementById('trainBtn');
+      const tplUser = document.getElementById('msg-user');
+      const tplBot = document.getElementById('msg-bot');
+      const tplTyping = document.getElementById('typing');
+      const modal = document.getElementById('modal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalInput = document.getElementById('modalInput');
+      const modalSave = document.getElementById('modalSave');
+      const modalCancel = document.getElementById('modalCancel');
+      const toast = document.getElementById('toast');
+
+      // Persistence
+      const STORAGE_KEY = 'bank_assistant_modern_v4';
+      let messages = [];
+      try { messages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch {}
+      const persist = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch {} };
+
+      // Helpers (safe)
+      const showToast = (t="Saved") => {
+        let inner = toast.firstElementChild;
+        if (!inner) {
+          inner = document.createElement('div');
+          inner.className = 'rounded-xl bg-slate-900 text-white px-4 py-2 text-sm shadow-soft';
+          toast.appendChild(inner);
+        }
+        inner.textContent = t;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 1300);
+      };
+
+      const renderMessage = (role, text) => {
+        const tpl = role === 'user' ? tplUser : tplBot;
+        const node = tpl.content.firstElementChild.cloneNode(true);
+
+        let p = node.querySelector('p');
+        if (!p) {
+          p = document.createElement('p');
+          p.className = 'whitespace-pre-wrap text-[15px] leading-6';
+          (node.querySelector('[class*="rounded-3xl"]') || node).prepend(p);
+        }
+        p.textContent = text;
+
+        const ts = node.querySelector('span');
+        if (ts) ts.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+        chat.appendChild(node);
+        chat.scrollTo({ top: chat.scrollHeight, behavior:'smooth' });
+        return node;
+      };
+
+      const renderTyping = () => {
+        const node = tplTyping.content.firstElementChild.cloneNode(true);
+        node.dataset.typing = '1';
+        chat.appendChild(node);
+        chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+      };
+      const removeTyping = () => { const n = chat.querySelector('[data-typing="1"]'); if (n) n.remove(); };
+
+      const openModal = (title, placeholder="") => new Promise((resolve) => {
+        modalTitle && (modalTitle.textContent = title);
+        modalInput && (modalInput.value = "", modalInput.placeholder = placeholder);
+
+        const prev = window.onkeydown;
+        const done = (v) => { modal.classList.add('hidden'); window.onkeydown = prev; modalInput && (modalInput.onkeydown = null); resolve(v); };
+        modal.classList.remove('hidden');
+        setTimeout(() => modalInput && modalInput.focus(), 20);
+
+        modalSave && (modalSave.onclick = () => done((modalInput && modalInput.value.trim()) || ""));
+        modalCancel && (modalCancel.onclick = () => done(null));
+        modal.onclick = (e) => { if (e.target === modal) done(null); };
+
+        window.onkeydown = (e) => { if (e.key === 'Escape') done(null); };
+        if (modalInput) {
+          modalInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); modalSave && modalSave.click(); }
+          };
+        }
+      });
+
+      const q = (root, sel) => root ? root.querySelector(sel) : null;
+
+      const attachActions = (botNode, info = {}) => {
+        const pill = q(botNode, '[data-debug]');
+        if (pill) {
+          const iEl = q(pill, '[data-intent]'); if (iEl) iEl.textContent = info.intent || '—';
+          const cEl = q(pill, '[data-conf]');   if (cEl) cEl.textContent = `conf ${Number(info.confidence ?? 0).toFixed(2)}`;
+          pill.hidden = false;
+        }
+        const bar = q(botNode, '[data-actions]');
+        if (!bar) return; bar.hidden = false;
+
+        const buttons = bar.querySelectorAll('button');
+        const upBtn = buttons[0], downBtn = buttons[1];
+        const correctBtn = q(bar, '[data-correct]');
+        const fixBtn = q(bar, '[data-fix]');
+        const iid = info.interaction_id ?? null;
+
+        const post = (payload) => fetch(API_FB, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+
+        upBtn && upBtn.addEventListener('click', async ()=>{ if (!iid) return; await post({interaction_id:iid, helpful:true}); showToast("Feedback saved 👍"); });
+        downBtn && downBtn.addEventListener('click', async ()=>{ if (!iid) return; await post({interaction_id:iid, helpful:false}); showToast("Feedback saved 👎"); });
+        correctBtn && correctBtn.addEventListener('click', async ()=>{ if (!iid) return; const val = await openModal("Correct intent","e.g., loan_rates"); if(!val) return; await post({interaction_id:iid, correction_intent:val}); showToast("Intent corrected"); });
+        fixBtn && fixBtn.addEventListener('click', async ()=>{ if (!iid) return; const val = await openModal("Provide a better answer","Type the improved response…"); if(!val) return; await post({interaction_id:iid, corrected_answer:val}); showToast("Answer saved"); });
+      };
+
+      const restore = () => {
+        chat.innerHTML = '';
+        if (!messages || messages.length === 0) {
+          renderMessage('bot', "Welcome! Ask about accounts, loan rates, hours, ATMs…");
+          return;
+        }
+        for (const m of messages) {
+          const node = renderMessage(m.role, m.text);
+          if (m.role === 'bot' && m.info) attachActions(node, m.info);
+        }
+      };
+
+      // Prevent accidental refresh submits
+      form.addEventListener('submit', (e) => e.preventDefault());
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+      });
+
+      // Buttons
+      clearBtn.addEventListener('click', () => {
+        messages = [];
+        persist();
+        chat.innerHTML = '';
+        renderMessage('bot', "Welcome! Ask about accounts, loan rates, hours, ATMs…");
+      });
+
+      trainBtn.addEventListener('click', async () => {
+        const node = renderMessage('bot', "Retraining model…");
+        const setBubbleText = (n, txt) => { const p = q(n, 'p'); if (p) p.textContent = txt; return txt; };
+        try {
+          const res = await fetch(API_TRAIN, { method:'POST', headers:{'Content-Type':'application/json'} });
+          const data = await res.json();
+          const txt = data.ok ? `Model retrained.\n${data.report || ''}` : `Training failed: ${data.error || 'unknown'}`;
+          messages.push({ role:'bot', text: setBubbleText(node, txt) }); persist();
+        } catch (e) {
+          const txt = `Oops, something went wrong in the page: ${e.message}`;
+          messages.push({ role:'bot', text: setBubbleText(node, txt) }); persist();
+        }
+      });
+
+      input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+      });
+
+      // Send
+      sendBtn.addEventListener('click', async () => {
+        const text = input.value.trim(); if (!text) return;
+
+        renderMessage('user', text);
+        messages.push({ role:'user', text }); persist();
+
+        input.value = ''; input.style.height = 'auto';
+        renderTyping();
+
+        try {
+          const res = await fetch(API_CHAT, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ message:text })
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+
+          removeTyping();
+          const reply = data.reply || 'Sorry, I had trouble responding.';
+          const node = renderMessage('bot', reply);
+          attachActions(node, data);
+
+          messages.push({ role:'bot', text: reply, info: data }); persist();
+
+          if (Number(data.confidence ?? 0) < LOW_CONF_THRESHOLD && data.interaction_id) {
+            const teach = await openModal("I'm not sure. Teach me the correct answer?","Type the correct answer…");
+            if (teach) {
+              await fetch(API_FB, { method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ interaction_id:data.interaction_id, corrected_answer:teach })
+              });
+              showToast("Saved learned answer");
+            }
+          }
+        } catch (err) {
+          removeTyping();
+          const isNetwork = /HTTP \d+|Failed to fetch|NetworkError/i.test(String(err?.message||err));
+          const msg = isNetwork
+            ? `Error contacting server: ${err.message}`
+            : `Oops, something went wrong in the page: ${err.message}`;
+          renderMessage('bot', msg);
+          messages.push({ role:'bot', text: msg }); persist();
+        }
+      });
+
+      window.addEventListener('beforeunload', persist);
+      restore();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Core
+numpy
+pandas
+scikit-learn
+nltk
+tabulate
+flask
+flask-cors
+scikit-learn
+nltk
+
+# Optional for Windows exe build (local dev machine, not required to run here)
+# pyinstaller

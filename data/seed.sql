@@ -1,0 +1,2 @@
+-- The application initializes and seeds via Python.
+-- This file documents the schema for reference (see chatbot/db.py).

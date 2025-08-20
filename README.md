@@ -1,64 +1,77 @@
-💳 Banking Chatbot Project
-📌 Project Overview
+# Banking Assistant Chatbot (Text-Based)
 
-The Banking Chatbot is an AI-powered conversational assistant designed to provide seamless banking services through natural language interaction. It helps customers access real-time financial information, perform basic transactions, and receive instant support without waiting for a human agent.
+A text-based **banking assistant** chatbot that uses:
+- **NLP** (tokenization, lemmatization) with NLTK
+- **Simple ML classifier** (Logistic Regression) for intent recognition
+- **Hybrid inference engine** (rule-based + ML)
+- **SQLite database** for dynamic facts and learned Q&A
+- **On-the-fly learning** from user feedback (stored into the DB)
+- **CLI interface**
 
-✨ Features
+This project is tailored to the assignment brief:
+- Natural Language Interface (text-based)
+- Inference Engine mapping questions to answers
+- Database/Knowledge Base with persistent storage
+- Indication of **machine learning** via training and online learning storage
+- Documentation with PEAS, architecture, snippets, algorithms, test data
 
-🔐 Secure Login & Authentication (OTP / Multi-Factor)
+## Quick Start
 
-💰 Check Account Balance
+```bash
+# 1) Create a virtual environment (recommended)
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/Mac: source .venv/bin/activate
 
-📜 View Transaction History
+# 2) Install dependencies
+pip install -r requirements.txt
 
-💸 Fund Transfers (within same bank accounts)
+# 3) First-time NLTK setup (downloads wordnet + punkt if needed)
+python -m chatbot.setup_nltk
 
-📊 Loan & Credit Card Information
+# 4) Run the chatbot (CLI)
+python -m chatbot.app
+```
 
-❓ Answer FAQs (banking hours, interest rates, charges, etc.)
+## Project Structure
 
-🌐 Multi-platform Support (Web, Mobile, Social Media)
+```
+chatbot/
+  app.py                 # CLI loop + user interaction
+  nlp.py                 # NLP pipeline (tokenize, lemmatize, normalize)
+  inference.py           # Rule-based + ML hybrid inference
+  db.py                  # SQLite helpers and seed data
+  training.py            # Train/load the ML model
+  setup_nltk.py          # One-time NLTK downloads
+  config.py              # Config and constants
+data/
+  seed.sql               # DB schema and seed values
+docs/
+  Technical_Documentation.md  # Assignment-aligned documentation
+  Viva_Demo_Script.md         # Short presentation + demo flow
+tests/
+  test_cases.csv         # Example test inputs/expected intent/notes
+requirements.txt
+README.md
+```
 
-🗣️ Multilingual Support (English + local languages)
+## Build a Standalone Executable (Optional)
 
-🛠️ Tech Stack
+> _This is optional and for your local machine._  
+> You can make a single-file exe using **PyInstaller**.
 
-Frontend: React.js / Flutter (for mobile apps)
+```bash
+pip install pyinstaller
+pyinstaller --onefile -n banking_chatbot chatbot/app.py
+# The executable will be in the dist/ folder.
+```
 
-Backend: Python (Flask/Django) or Node.js
+## Learning Feature (Machine Learning)
 
-NLP: Rasa / Dialogflow / OpenAI API
+- Unknown queries are stored in `user_learned_qa` with the user's provided answer (after confirmation).
+- These can be reviewed later and optionally merged into the main knowledge base or used to retrain the ML classifier.
 
-Database: MySQL / PostgreSQL / MongoDB
+## Domain
 
-Security: JWT, OAuth 2.0, SSL Encryption
-
-🔗 Integration
-
-Banking APIs for real-time balance & transaction details
-
-Payment Gateway APIs for secure fund transfers
-
-Cloud deployment (AWS / Azure / GCP)
-
-🚀 Benefits
-
-24/7 customer support
-
-Reduces workload on human agents
-
-Faster service with reduced wait times
-
-Improves customer satisfaction & loyalty
-
-Cost-efficient automation for banks
-
-📌 Future Enhancements
-
-Voice-enabled chatbot (Speech-to-Text)
-
-Personalized financial advice using AI
-
-Fraud detection and real-time alerts
-
-Cross-bank fund transfers
+Focused on **banking**: account types, interest rates, branch locations/hours, loan info, ATM availability, and small talk.
+```

@@ -1,0 +1,8 @@
+input,expected_intent,notes
+hello,greeting,smalltalk
+what account types do you have,account_types,list of accounts from DB
+what is loan interest,loan_rates,returns personal/home/auto rates
+when are you open on saturday,branch_hours,weekend hours
+is there an atm near me,atm_availability,general guidance
+bye,goodbye,closing
+thanks,thanks,acknowledgement
